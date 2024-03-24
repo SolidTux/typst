@@ -2,9 +2,7 @@ use ecow::{eco_format, EcoString};
 
 use crate::diag::{At, SourceResult};
 use crate::engine::Engine;
-use crate::foundations::{
-    cast, elem, Content, Label, Packed, Repr, Show, Smart, StyleChain,
-};
+use crate::foundations::{cast, elem, Content, Label, Packed, Repr, Show, StyleChain};
 use crate::introspection::Location;
 use crate::layout::Position;
 use crate::text::{Hyphenate, TextElem};
@@ -102,7 +100,7 @@ impl Show for Packed<LinkElem> {
             }
         };
 
-        Ok(linked.styled(TextElem::set_hyphenate(Hyphenate(Smart::Custom(false)))))
+        Ok(linked.styled(TextElem::set_hyphenate(Hyphenate::Bool(false))))
     }
 }
 

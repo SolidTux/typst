@@ -13,7 +13,7 @@ use crate::diag::{At, FileError, SourceResult, StrResult};
 use crate::engine::Engine;
 use crate::foundations::{
     cast, elem, scope, Args, Array, Bytes, Content, Fold, NativeElement, Packed,
-    PlainText, Show, ShowSet, Smart, StyleChain, Styles, Synthesize, Value,
+    PlainText, Show, ShowSet, StyleChain, Styles, Synthesize, Value,
 };
 use crate::layout::{BlockElem, Em, HAlignment};
 use crate::model::Figurable;
@@ -457,7 +457,7 @@ impl ShowSet for Packed<RawElem> {
     fn show_set(&self, _: StyleChain) -> Styles {
         let mut out = Styles::new();
         out.set(TextElem::set_overhang(false));
-        out.set(TextElem::set_hyphenate(Hyphenate(Smart::Custom(false))));
+        out.set(TextElem::set_hyphenate(Hyphenate::Bool(false)));
         out.set(TextElem::set_size(TextSize(Em::new(0.8).into())));
         out.set(TextElem::set_font(FontList(vec![FontFamily::new("DejaVu Sans Mono")])));
         out.set(SmartQuoteElem::set_enabled(false));

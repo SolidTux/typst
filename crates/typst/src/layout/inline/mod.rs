@@ -10,7 +10,6 @@ use self::shaping::{
     cjk_punct_style, is_of_cj_script, shape, ShapedGlyph, ShapedText, BEGIN_PUNCT_PAT,
     END_PUNCT_PAT,
 };
-use crate::diag::{bail, SourceResult};
 use crate::engine::{Engine, Route};
 use crate::eval::Tracer;
 use crate::foundations::{Content, Packed, Resolve, Smart, StyleChain, StyledElem};
@@ -27,6 +26,10 @@ use crate::text::{
 };
 use crate::util::Numeric;
 use crate::World;
+use crate::{
+    diag::{bail, SourceResult},
+    text::HyphenationMetric,
+};
 
 /// Layouts content inline.
 pub(crate) fn layout_inline(
@@ -115,7 +118,7 @@ struct Preparation<'a> {
     /// The span mapper.
     spans: SpanMapper,
     /// Whether to hyphenate if it's the same for all children.
-    hyphenate: Option<bool>,
+    hyphenate: Option<HyphenationMetric>,
     /// The text language if it's the same for all children.
     lang: Option<Lang>,
     /// The paragraph's resolved horizontal alignment.

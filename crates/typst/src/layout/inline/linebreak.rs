@@ -7,8 +7,8 @@ use icu_segmenter::LineSegmenter;
 use once_cell::sync::Lazy;
 
 use super::Preparation;
-use crate::syntax::link_prefix;
 use crate::text::{Lang, TextElem};
+use crate::{syntax::link_prefix, text::HyphenationMetric};
 
 /// The general line break segmenter.
 static SEGMENTER: Lazy<LineSegmenter> = Lazy::new(|| {
@@ -61,7 +61,7 @@ pub(super) fn breakpoints<'a>(
     mut f: impl FnMut(usize, Breakpoint),
 ) {
     let text = p.bidi.text;
-    let hyphenate = p.hyphenate != Some(false);
+    let hyphenate = p.hyphenate.unwrap_or_default();
     let lb = LINEBREAK_DATA.as_borrowed();
     let segmenter = match p.lang {
         Some(Lang::CHINESE | Lang::JAPANESE) => &CJ_SEGMENTER,
@@ -109,7 +109,7 @@ pub(super) fn breakpoints<'a>(
 
         // Hyphenate between the last and current breakpoint.
         'hyphenate: {
-            if !hyphenate {
+            if hyphenate == HyphenationMetric::Off {
                 break 'hyphenate;
             }
 
@@ -119,6 +119,7 @@ pub(super) fn breakpoints<'a>(
                 break 'hyphenate;
             }
 
+            let start = last;
             let end = last + word.len();
             let mut offset = last;
 
@@ -132,9 +133,19 @@ pub(super) fn breakpoints<'a>(
                     continue;
                 }
 
+                // Check if enough chars have been left before and after
+                if let HyphenationMetric::Chars(before, after) = hyphenate {
+                    if offset - start < before {
+                        continue;
+                    }
+                    if end - offset < after {
+                        continue;
+                    }
+                }
+
                 // Filter out hyphenation opportunities where hyphenation was
                 // actually disabled.
-                if !hyphenate_at(p, offset) {
+                if hyphenate_at(p, offset) == HyphenationMetric::Off {
                     continue;
                 }
 
@@ -217,13 +228,13 @@ fn linebreak_link(link: &str, mut f: impl FnMut(usize)) {
 }
 
 /// Whether hyphenation is enabled at the given offset.
-fn hyphenate_at(p: &Preparation, offset: usize) -> bool {
+fn hyphenate_at(p: &Preparation, offset: usize) -> HyphenationMetric {
     p.hyphenate
         .or_else(|| {
             let shaped = p.find(offset)?.text()?;
             Some(TextElem::hyphenate_in(shaped.styles))
         })
-        .unwrap_or(false)
+        .unwrap_or_default()
 }
 
 /// The text language at the given offset.

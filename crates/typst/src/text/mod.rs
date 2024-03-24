@@ -976,22 +976,75 @@ impl Resolve for TextDir {
 }
 
 /// Whether to hyphenate text.
-#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Hyphenate(pub Smart<bool>);
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum Hyphenate {
+    Auto,
+    Metric(HyphenationMetric),
+    Bool(bool),
+}
 
 cast! {
     Hyphenate,
-    self => self.0.into_value(),
-    v: Smart<bool> => Self(v),
+    self => match self {
+        Self::Auto => Smart::<HyphenationMetric>::Auto.into_value(),
+        Self::Metric(metric) => Smart::Custom(metric).into_value(),
+        Self::Bool(b) => Smart::Custom(HyphenationMetric::from(b)).into_value(),
+    },
+    v: bool => Self::Bool(v),
+    v: HyphenationMetric => Self::Metric(v),
+}
+
+impl Default for Hyphenate {
+    fn default() -> Self {
+        Self::Auto
+    }
 }
 
 impl Resolve for Hyphenate {
-    type Output = bool;
+    type Output = HyphenationMetric;
 
     fn resolve(self, styles: StyleChain) -> Self::Output {
-        match self.0 {
-            Smart::Auto => ParElem::justify_in(styles),
-            Smart::Custom(v) => v,
+        match self {
+            Self::Auto => ParElem::justify_in(styles).into(),
+            Self::Metric(metric) => metric,
+            Self::Bool(b) => b.into(),
+        }
+    }
+}
+
+/// How to hyphenate text.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum HyphenationMetric {
+    Off,
+    Chars(usize, usize),
+}
+
+cast! {
+    HyphenationMetric,
+    self => match self {
+        Self::Off => false.into_value(),
+        Self::Chars(before, after) => vec![before, after].into_value()
+    },
+    v: bool => v.into(),
+    v: Vec<usize> => if v.len() == 2 {
+        Self::Chars(v[0], v[1])
+    } else {
+        Self::Off // TODO handle error
+    },
+}
+
+impl Default for HyphenationMetric {
+    fn default() -> Self {
+        Self::Chars(0, 0)
+    }
+}
+
+impl From<bool> for HyphenationMetric {
+    fn from(value: bool) -> Self {
+        if value {
+            Self::default()
+        } else {
+            Self::Off
         }
     }
 }

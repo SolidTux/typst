@@ -119,28 +119,24 @@ pub(super) fn breakpoints<'a>(
                 break 'hyphenate;
             }
 
-            let start = last;
             let end = last + word.len();
             let mut offset = last;
 
             // Determine the language to hyphenate this word in.
             let Some(lang) = lang_at(p, last) else { break 'hyphenate };
 
-            for syllable in hypher::hyphenate(word, lang) {
+            let syllables = match hyphenate {
+                HyphenationMetric::Off => hypher::hyphenate(word, lang),
+                HyphenationMetric::Chars(before, after) => {
+                    hypher::hyphenate_bounded(word, lang, before, after)
+                }
+            };
+
+            for syllable in syllables {
                 // Don't hyphenate after the final syllable.
                 offset += syllable.len();
                 if offset == end {
                     continue;
-                }
-
-                // Check if enough chars have been left before and after
-                if let HyphenationMetric::Chars(before, after) = hyphenate {
-                    if offset - start < before {
-                        continue;
-                    }
-                    if end - offset < after {
-                        continue;
-                    }
                 }
 
                 // Filter out hyphenation opportunities where hyphenation was

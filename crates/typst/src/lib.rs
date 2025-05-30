@@ -154,7 +154,7 @@ fn compile_impl<D: Document>(
             break;
         }
 
-        if iter >= 100 {
+        if iter >= 500 {
             subsink.warn(warning!(
                 Span::detached(), "layout did not converge within 100 attempts";
                 hint: "check if any states or queries are updating themselves"

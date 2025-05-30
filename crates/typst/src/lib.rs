@@ -131,7 +131,7 @@ fn compile_impl<D: Document>(
         // The name of the iterations for timing scopes.
         const ITER_NAMES: &[&str] =
             &["layout (1)", "layout (2)", "layout (3)", "layout (4)", "layout (5)"];
-        let _scope = TimingScope::new(ITER_NAMES[iter]);
+        let _scope = TimingScope::new(ITER_NAMES[iter % 5]);
 
         subsink = Sink::new();
 
@@ -154,9 +154,9 @@ fn compile_impl<D: Document>(
             break;
         }
 
-        if iter >= 5 {
+        if iter >= 100 {
             subsink.warn(warning!(
-                Span::detached(), "layout did not converge within 5 attempts";
+                Span::detached(), "layout did not converge within 100 attempts";
                 hint: "check if any states or queries are updating themselves"
             ));
             break;
